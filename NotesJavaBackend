@@ -1,0 +1,205 @@
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+// Main class
+
+public class Main {
+	public static List<String> tagValues = new ArrayList<String>();
+	public static Scanner userInput = new Scanner(System.in);
+	public static String choice = "";
+	public static String str_filePath;
+	public static String str_text;
+	public static String str_fileName;
+
+	public static void main(String[] args) {
+		INFORMATION();
+		inputComand();
+
+	}
+
+	public static void inputComand() {
+		tagValues.clear();
+		choice = "";
+		while (choice.equals("")) {
+			System.out.println("Please input command!");
+			choice = userInput.nextLine();
+		}
+
+		try {
+			Arrays.toString(getTagValues(choice).toArray());
+			//System.out.println(tagValues);
+			str_filePath = (tagValues.get(0).toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		CheckCommands();
+	}
+
+	private static final Pattern TAG_REGEX = Pattern.compile("java -(.+?) -", Pattern.DOTALL);
+	private static final Pattern TAG_REGEX1 = Pattern.compile(".txt> <(.+?)>", Pattern.DOTALL);
+	private static final Pattern TAG_REGEX2 = Pattern.compile("-add <(.+?)>", Pattern.DOTALL);
+
+	private static List<String> getTagValues(final String str) {
+
+		final Matcher matcher = TAG_REGEX.matcher(str);
+		while (matcher.find()) {
+			tagValues.add(matcher.group(1));
+		}
+		return tagValues;
+	}
+
+	private static List<String> getTagValues1(final String str) {
+
+		final Matcher matcher = TAG_REGEX1.matcher(str);
+		while (matcher.find()) {
+			tagValues.add(matcher.group(1));
+		}
+		return tagValues;
+	}
+
+	private static List<String> getTagValues2(final String str) {
+
+		final Matcher matcher = TAG_REGEX2.matcher(str);
+		while (matcher.find()) {
+			tagValues.add(matcher.group(1));
+		}
+		return tagValues;
+	}
+
+	public static void INFORMATION() {
+		String line = "Add note: java –jar notes –add <note_title> <note_content>.\r\n"
+				+ "List all notes: java –jar notes –list. It will display the list of available notes (only titles).\r\n"
+				+ "List a specific note: java –jar notes –list <note_title>. It will display the title and the content of specified note.\r\n"
+				+ "Exit: Exit";
+		// get user input
+		System.out.println("HOW THE APP WORKS: ");
+		System.out.println(line);
+		System.out.println(
+				"Note! 'jar notes' is the location where you want to save or from where you want to read the file\r\n"
+						+ "Must have the follwong format E:\\ \r\n");
+		System.out.println("Working examples:");
+		System.out.println("1)java -E:\\ -add <hello.txt> <Some text>");
+		System.out.println("2)java -E:\\ -list <hello.txt>");
+		System.out.println("3)java -E:\\ -list");
+
+	}
+
+	public static void CheckCommands() {
+
+		if (choice.contains("-add")) {
+
+			if (choice.matches("java -(.+?) -add <(.+?).txt> <(.+?)>")) {
+
+				try {
+					Arrays.toString(getTagValues2(choice).toArray());
+					//System.out.println(tagValues);
+					str_fileName = (tagValues.get(1).toString());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				try {
+					Arrays.toString(getTagValues1(choice).toArray());
+					//System.out.println(tagValues);
+					str_text = (tagValues.get(2).toString());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				//System.out.println(str_filePath + " " + str_fileName + " " + str_text);
+				CreateFile(str_filePath, str_fileName, str_text);
+				System.out.println("File created");
+			}
+			else {//here1
+				System.out.println("Wrong command");
+				inputComand();}
+		} else if (choice.contains("-list <")) {
+
+			if (choice.matches("java -(.+?) -list <(.+?).txt>")) {
+				str_fileName = choice.substring(choice.lastIndexOf(" ") + 2);
+				if (str_fileName != null && str_fileName.length() > 0
+						&& str_fileName.charAt(str_fileName.length() - 1) == '>') {
+					str_fileName = str_fileName.substring(0, str_fileName.length() - 1);
+				}
+				//System.out.println(str_fileName);
+				ReadFile(str_filePath, str_fileName);
+			}
+			else {//here2
+				System.out.println("Wrong command");
+				inputComand();}
+		} else if (choice.contains("-list")) {
+
+			if (choice.matches("java -(.+?) -list")) {
+				ListTxtFiles(str_filePath);
+			}
+		} else if (choice.contains("Exit")) {
+			System.out.println("Leaving Program!");
+			return;
+		} else {
+			System.out.println("Wrong command");
+			inputComand();
+		}
+	}
+
+	public static void CreateFile(String a, String b, String c) {
+		try {
+			String FileLoc = a + "\\" + b;
+			PrintWriter writer = new PrintWriter(FileLoc, "UTF-8");
+			writer.println(c);
+			writer.close();
+		} catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	}
+
+	public static void ReadFile(String f, String g) {
+		String content = "";
+		try {
+			content = new String(Files.readAllBytes(Paths.get(f + "\\" + g)));
+
+		} catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+		System.out.println(content);
+	}
+
+	public static void ListTxtFiles(String h) {
+		try {
+			// Creates an array in which we will store the names of files and directories
+			String[] pathnames;
+			List<String> txtFileNames = new ArrayList<String>();
+			// Creates a new File instance by converting the given pathname string
+			// into an abstract pathname
+			File f = new File(h);
+
+			// Populates the array with names of files and directories
+			pathnames = f.list();
+
+			// For each pathname in the pathnames array
+			for (String pathname : pathnames) {
+				if (pathname.contains(".txt")) {
+					System.out.println(pathname);
+					txtFileNames.add(pathname);
+				}
+
+			}
+		} catch (Exception e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	}
+}
